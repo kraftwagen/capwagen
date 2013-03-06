@@ -39,18 +39,25 @@ module Capwagen
         # filling projects with the correct symlinks, is completely different from
         # Rails projects.
         task :finalize_update, :except => { :no_release => true } do
-          run "chmod -R g+w #{latest_release}" if fetch(:group_writable, true)
+          escaped_release = latest_release.to_s.shellescape
+
+          commands = []
+          commands << "chmod -R -- g+w #{escaped_release}" if fetch(:group_writable, true)
 
           # mkdir -p is making sure that the directories are there for some SCM's that don't
           # save empty folders
-          (shared_files + shared_dirs).map do |d|
+          (shared_files + shared_dirs).map do |dir|
+            d = dir.shellescape
             if (d.rindex('/')) then
-              run "rm -rf #{latest_release}/#{d} && mkdir -p #{latest_release}/#{d.slice(0..(d.rindex('/')))}"
+              commands += ["rm -rf #{escaped_release}/#{d}",
+                           "mkdir -p #{escaped_release}/#{dir.slice(0..(dir.rindex('/'))).shellescape}"]
             else
-              run "rm -rf #{latest_release}/#{d}"
+              commands << "rm -rf #{escaped_release}/#{d}"
             end
-            run "ln -s #{shared_path}/#{d.split('/').last} #{latest_release}/#{d}"
+            commands << "ln -s #{shared_path}/#{dir.split('/').last.shellescape} #{escaped_release}/#{d}"
           end
+
+          run commands.join(' && ') if commands.any?
         end
 
         task :setup, :except => { :no_release => true } do
