@@ -35,6 +35,14 @@ module Capwagen
           end
         end
 
+        task :install do
+          transaction do
+            update_code
+            create_symlink
+            find_and_execute_task("kraftwagen:install")
+          end
+        end
+
         # We override the default finalize update task, because our logic for 
         # filling projects with the correct symlinks, is completely different from
         # Rails projects.
@@ -89,6 +97,12 @@ module Capwagen
 
       # The Kraftwagen namespace contains the Kraftwagen update process
       namespace :kraftwagen do
+        task :install do
+          initialize_database
+          find_and_execute_task("drupal:cache_clear")
+          update
+        end
+
         task :update do
           apply_module_dependencies
           updatedb
@@ -99,6 +113,9 @@ module Capwagen
           find_and_execute_task("drupal:cache_clear")
         end
 
+        task :initialize_database do
+          run "cd #{latest_release} && #{drush_cmd} site-install #{install_profile} --yes"
+        end
         task :apply_module_dependencies do
           run "cd #{latest_release} && #{drush_cmd} kw-apply-module-dependencies #{kraftwagen_environment}"
         end
