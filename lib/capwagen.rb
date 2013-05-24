@@ -120,7 +120,7 @@ module Capwagen
           run "cd #{latest_release} && #{drush_cmd} kw-apply-module-dependencies #{kraftwagen_environment}"
         end
         task :updatedb do
-          run "cd #{latest_release} && #{drush_cmd} updatedb"
+          run "cd #{latest_release} && #{drush_cmd} updatedb --yes"
         end
         task :features_revert do
           run "cd #{latest_release} && #{drush_cmd} features-revert-all --yes"
